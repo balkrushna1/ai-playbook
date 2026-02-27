@@ -97,7 +97,7 @@ export async function registerRoutes(
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <text x="80" y="250" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="700">PlaybookAI</text>
-  <text x="80" y="330" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="36">AI Workflow Playbooks & Prompt Guides</text>
+  <text x="80" y="330" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="36">AI Workflow Playbooks &amp; Prompt Guides</text>
   <text x="80" y="530" fill="#CBD5E1" font-family="Inter, Arial, sans-serif" font-size="28">${escapeXml(siteUrl)}</text>
 </svg>`;
 
