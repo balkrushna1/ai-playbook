@@ -19,7 +19,7 @@ export default function PlaybookDetail() {
   const { data: playbook, isLoading } = usePlaybook(params?.slug || "");
   const { user } = useAuth();
   const rateMutation = useRatePlaybook();
-  const { deletePlaybook, isPending: isDeleting } = useDeletePlaybook();
+  const deleteMutation = useDeletePlaybook();
   const { toast } = useToast();
   
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -55,7 +55,7 @@ export default function PlaybookDetail() {
   };
 
   const handleDelete = async () => {
-    await deletePlaybook(playbook.id);
+    await deleteMutation.mutateAsync(playbook.id);
     setDeleteModalOpen(false);
     setLocation("/explore");
   };
@@ -204,8 +204,8 @@ export default function PlaybookDetail() {
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting..." : "Delete Permanently"}
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
             </Button>
           </DialogFooter>
         </DialogContent>

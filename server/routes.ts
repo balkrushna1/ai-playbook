@@ -10,13 +10,23 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  const { hashPassword } = setupAuth(app);
+  const { hashPassword, googleAuthEnabled } = setupAuth(app);
+
+  const safeUser = (user: { id: string; username: string; googleId: string | null; authProvider: string }) => ({
+    id: user.id,
+    username: user.username,
+    googleId: user.googleId,
+    authProvider: user.authProvider,
+  });
 
   app.post(api.auth.register.path, async (req, res) => {
     try {
       const input = api.auth.register.input.parse(req.body);
       const existingUser = await storage.getUserByUsername(input.username);
       if (existingUser) {
+        if (existingUser.authProvider === "google") {
+          return res.status(400).json({ message: "Account already exists with Google sign-in. Please continue with Google." });
+        }
         return res.status(400).json({ message: "Username already exists" });
       }
       
@@ -25,7 +35,7 @@ export async function registerRoutes(
       
       req.login(user, (err) => {
         if (err) throw err;
-        res.status(201).json(user);
+        res.status(201).json(safeUser(user));
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -35,8 +45,44 @@ export async function registerRoutes(
     }
   });
 
-  app.post(api.auth.login.path, passport.authenticate("local"), (req, res) => {
-    res.status(200).json(req.user);
+  app.post(api.auth.login.path, (req, res, next) => {
+    passport.authenticate("local", (err: any, user: Express.User | false, info: { message?: string } | undefined) => {
+      if (err) return next(err);
+      if (!user) {
+        return res.status(401).json({ message: info?.message || "Invalid username or password" });
+      }
+
+      req.login(user, (loginErr) => {
+        if (loginErr) return next(loginErr);
+        return res.status(200).json(safeUser(user));
+      });
+    })(req, res, next);
+  });
+
+  app.get(api.auth.google.path, (req, res, next) => {
+    if (!googleAuthEnabled) {
+      return res.status(503).json({ message: "Google auth is not configured" });
+    }
+    return passport.authenticate("google", { scope: ["profile", "email"], prompt: "select_account" })(req, res, next);
+  });
+
+  app.get(api.auth.googleCallback.path, (req, res, next) => {
+    if (!googleAuthEnabled) {
+      return res.status(503).json({ message: "Google auth is not configured" });
+    }
+
+    passport.authenticate("google", { failureRedirect: "/?auth=google_failed" }, (err: any, user: Express.User | false) => {
+      if (err || !user) {
+        return res.redirect("/?auth=google_failed");
+      }
+
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          return res.redirect("/?auth=google_failed");
+        }
+        return res.redirect("/");
+      });
+    })(req, res, next);
   });
 
   app.post(api.auth.logout.path, (req, res, next) => {
@@ -50,7 +96,7 @@ export async function registerRoutes(
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Not authenticated" });
     }
-    res.status(200).json(req.user);
+    res.status(200).json(safeUser(req.user!));
   });
 
   // Playbooks

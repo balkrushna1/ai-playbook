@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import { api } from "@shared/routes";
 
 export default function AuthModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { login, register, isLoggingIn, isRegistering } = useAuth();
@@ -31,6 +32,10 @@ export default function AuthModal({ open, onOpenChange }: { open: boolean, onOpe
     }
   };
 
+  const handleGoogleAuth = () => {
+    window.location.href = api.auth.google.path;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
@@ -50,6 +55,17 @@ export default function AuthModal({ open, onOpenChange }: { open: boolean, onOpe
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
+                <Button type="button" variant="outline" className="w-full h-11 text-base font-medium rounded-xl" onClick={handleGoogleAuth}>
+                  Continue with Google
+                </Button>
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or continue with username</span>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="login-username">Username</Label>
                   <Input 
@@ -81,6 +97,17 @@ export default function AuthModal({ open, onOpenChange }: { open: boolean, onOpe
             
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
+                <Button type="button" variant="outline" className="w-full h-11 text-base font-medium rounded-xl" onClick={handleGoogleAuth}>
+                  Continue with Google
+                </Button>
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or create account with username</span>
+                  </div>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="register-username">Username</Label>
                   <Input 

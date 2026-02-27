@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Express } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -52,6 +53,9 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await storage.getUserByUsername(username);
+        if (user?.authProvider === "google") {
+          return done(null, false, { message: "This account uses Google sign-in. Please continue with Google." });
+        }
         if (!user || !(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Invalid username or password" });
         }
@@ -61,6 +65,57 @@ export function setupAuth(app: Express) {
       }
     }),
   );
+
+  const googleAuthEnabled = Boolean(
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET &&
+    process.env.GOOGLE_CALLBACK_URL,
+  );
+
+  if (googleAuthEnabled) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env.GOOGLE_CLIENT_ID!,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+          callbackURL: process.env.GOOGLE_CALLBACK_URL!,
+        },
+        async (_accessToken, _refreshToken, profile, done) => {
+          try {
+            const email = profile.emails?.[0]?.value?.toLowerCase();
+            if (!email) {
+              return done(new Error("Google account does not include an email address"));
+            }
+
+            const existingByGoogle = await storage.getUserByGoogleId(profile.id);
+            if (existingByGoogle) {
+              return done(null, existingByGoogle);
+            }
+
+            const existingByUsername = await storage.getUserByUsername(email);
+            if (existingByUsername) {
+              if (existingByUsername.googleId && existingByUsername.googleId !== profile.id) {
+                return done(new Error("Account conflict detected for this email"));
+              }
+
+              const linked = await storage.linkGoogleAccount(existingByUsername.id, profile.id);
+              return done(null, linked);
+            }
+
+            const generatedPassword = await hashPassword(randomBytes(32).toString("hex"));
+            const created = await storage.createGoogleUser({
+              username: email,
+              password: generatedPassword,
+              googleId: profile.id,
+            });
+            return done(null, created);
+          } catch (err) {
+            return done(err as Error);
+          }
+        },
+      ),
+    );
+  }
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: string, done) => {
@@ -72,5 +127,5 @@ export function setupAuth(app: Express) {
     }
   });
 
-  return { hashPassword, comparePasswords };
+  return { hashPassword, comparePasswords, googleAuthEnabled };
 }

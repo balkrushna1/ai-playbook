@@ -5,6 +5,8 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   username: text("username").notNull().unique(), // Using as email
+  googleId: text("google_id").unique(),
+  authProvider: text("auth_provider").notNull().default("local"),
   password: text("password").notNull(),
 });
 
@@ -65,6 +67,10 @@ export const insertRatingSchema = createInsertSchema(ratings).omit({
 });
 
 export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Playbook = typeof playbooks.$inferSelect;
+export type InsertPlaybook = z.infer<typeof insertPlaybookSchema>;
 export type Step = typeof steps.$inferSelect;
+export type InsertStep = z.infer<typeof insertStepSchema>;
 export type Rating = typeof ratings.$inferSelect;
+export type InsertRating = z.infer<typeof insertRatingSchema>;
