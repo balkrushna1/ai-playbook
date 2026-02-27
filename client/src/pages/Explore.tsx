@@ -5,8 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, FilterX } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/hooks/use-seo";
 
 export default function Explore() {
+  useSeo({
+    title: "Explore AI Playbooks | PlaybookAI",
+    description:
+      "Browse community AI playbooks, filter by category and difficulty, and find step-by-step workflows that deliver results.",
+    canonicalPath: "/explore",
+  });
+
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState<string>("all");

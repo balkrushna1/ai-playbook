@@ -5,6 +5,8 @@ import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
 import { nanoid } from "nanoid";
+import { storage } from "./storage";
+import { getDefaultSeo, getPlaybookSeo, injectSeoIntoHtml } from "./seo";
 
 const viteLogger = createLogger();
 
@@ -48,6 +50,30 @@ export async function setupVite(server: Server, app: Express) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
+
+      const siteUrl = (process.env.PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      let seo = getDefaultSeo(siteUrl);
+      const playbookMatch = req.path.match(/^\/playbook\/([^/?#]+)/);
+      if (playbookMatch) {
+        const slug = decodeURIComponent(playbookMatch[1]);
+        const playbook = await storage.getPlaybookBySlug(slug);
+        if (playbook) {
+          seo = getPlaybookSeo(siteUrl, {
+            slug: playbook.slug,
+            title: playbook.title,
+            shortDescription: playbook.shortDescription,
+            authorName: playbook.authorName,
+            toolsUsed: playbook.toolsUsed,
+            createdAt: playbook.createdAt,
+            estimatedTime: playbook.estimatedTime,
+            ratingCount: playbook.ratingCount,
+            averageRating: playbook.averageRating,
+            steps: playbook.steps,
+          });
+        }
+      }
+
+      template = injectSeoIntoHtml(template, seo);
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {

@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash, GripVertical, ChevronRight } from "lucide-react";
 import AuthModal from "@/components/auth/AuthModal";
+import { useSeo } from "@/hooks/use-seo";
 
 const stepSchema = z.object({
   stepNumber: z.number(),
@@ -37,6 +38,13 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreatePlaybook() {
+  useSeo({
+    title: "Create Playbook | PlaybookAI",
+    description: "Create and publish your own AI workflow playbook.",
+    canonicalPath: "/create",
+    noindex: true,
+  });
+
   const { user, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { mutateAsync: createPlaybook, isPending } = useCreatePlaybook();
