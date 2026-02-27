@@ -12,6 +12,7 @@ import { useState } from "react";
 import AuthModal from "@/components/auth/AuthModal";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useSeo } from "@/hooks/use-seo";
 
 export default function PlaybookDetail() {
   const [, params] = useRoute("/playbook/:slug");
@@ -24,6 +25,36 @@ export default function PlaybookDetail() {
   
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+
+  useSeo({
+    title: playbook
+      ? `${playbook.title} | PlaybookAI`
+      : "AI Playbook Details | PlaybookAI",
+    description: playbook
+      ? playbook.shortDescription
+      : "Step-by-step AI workflow with tools, prompts, and expected outputs.",
+    canonicalPath: params?.slug ? `/playbook/${params.slug}` : "/explore",
+    structuredData: playbook
+      ? {
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          name: playbook.title,
+          description: playbook.shortDescription,
+          author: {
+            "@type": "Person",
+            name: playbook.authorName,
+          },
+          totalTime: playbook.estimatedTime,
+          step: playbook.steps
+            .sort((a, b) => a.stepNumber - b.stepNumber)
+            .map((step) => ({
+              "@type": "HowToStep",
+              name: step.title,
+              text: step.description,
+            })),
+        }
+      : undefined,
+  });
 
   if (isLoading) {
     return (

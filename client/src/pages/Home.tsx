@@ -4,8 +4,27 @@ import { ArrowRight, Sparkles, Zap, Shield } from "lucide-react";
 import { usePlaybooks } from "@/hooks/use-playbooks";
 import PlaybookCard from "@/components/PlaybookCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSeo } from "@/hooks/use-seo";
 
 export default function Home() {
+  useSeo({
+    title: "PlaybookAI | AI Workflow Playbooks & Prompt Guides",
+    description:
+      "Discover proven AI workflows and prompt playbooks for writing, coding, design, marketing, and more.",
+    canonicalPath: "/",
+    structuredData: {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "PlaybookAI",
+      url: window.location.origin,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${window.location.origin}/explore?search={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
+    },
+  });
+
   const { data: playbooks, isLoading } = usePlaybooks({ sort: 'highest_rated' });
 
   return (

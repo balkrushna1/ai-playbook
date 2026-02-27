@@ -11,12 +11,56 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   const { hashPassword, googleAuthEnabled } = setupAuth(app);
+  const siteUrl = (process.env.PUBLIC_BASE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:5000").replace(/\/$/, "");
+
+  const escapeXml = (value: string) =>
+    value
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&apos;");
 
   const safeUser = (user: { id: string; username: string; googleId: string | null; authProvider: string }) => ({
     id: user.id,
     username: user.username,
     googleId: user.googleId,
     authProvider: user.authProvider,
+  });
+
+  app.get("/robots.txt", (_req, res) => {
+    res.type("text/plain");
+    res.send(`User-agent: *\nAllow: /\nDisallow: /create\nSitemap: ${siteUrl}/sitemap.xml\n`);
+  });
+
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const playbookItems = await storage.getPlaybooks({ sort: "newest" });
+      const now = new Date().toISOString();
+
+      const staticUrls = [
+        { path: "/", changefreq: "weekly", priority: "1.0", lastmod: now },
+        { path: "/explore", changefreq: "daily", priority: "0.9", lastmod: now },
+      ];
+
+      const urls = [
+        ...staticUrls.map(
+          (entry) =>
+            `<url><loc>${escapeXml(`${siteUrl}${entry.path}`)}</loc><lastmod>${entry.lastmod}</lastmod><changefreq>${entry.changefreq}</changefreq><priority>${entry.priority}</priority></url>`,
+        ),
+        ...playbookItems.map((playbook) => {
+          const lastMod = playbook.createdAt ? new Date(playbook.createdAt).toISOString() : now;
+          return `<url><loc>${escapeXml(`${siteUrl}/playbook/${playbook.slug}`)}</loc><lastmod>${lastMod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+        }),
+      ];
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>`;
+
+      res.type("application/xml");
+      res.send(xml);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to generate sitemap" });
+    }
   });
 
   app.post(api.auth.register.path, async (req, res) => {
