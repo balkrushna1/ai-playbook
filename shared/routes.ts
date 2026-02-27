@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertPlaybookSchema, insertStepSchema, insertUserSchema, playbooks, users } from './schema';
+import { insertPlaybookSchema, insertStepSchema, insertUserSchema } from './schema';
 
 export const errorSchemas = {
   validation: z.object({
@@ -48,6 +48,13 @@ const PlaybookDetailResponseSchema = PlaybookResponseSchema.extend({
   steps: z.array(StepSchema),
 });
 
+const AuthUserResponseSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  googleId: z.string().nullable().optional(),
+  authProvider: z.string(),
+});
+
 export const api = {
   auth: {
     register: {
@@ -55,7 +62,7 @@ export const api = {
       path: '/api/auth/register' as const,
       input: insertUserSchema,
       responses: {
-        201: z.custom<typeof users.$inferSelect>(),
+        201: AuthUserResponseSchema,
         400: errorSchemas.validation,
       },
     },
@@ -64,8 +71,22 @@ export const api = {
       path: '/api/auth/login' as const,
       input: insertUserSchema,
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: AuthUserResponseSchema,
         401: errorSchemas.unauthorized,
+      },
+    },
+    google: {
+      method: 'GET' as const,
+      path: '/api/auth/google' as const,
+      responses: {
+        302: z.void(),
+      },
+    },
+    googleCallback: {
+      method: 'GET' as const,
+      path: '/api/auth/google/callback' as const,
+      responses: {
+        302: z.void(),
       },
     },
     logout: {
@@ -79,7 +100,7 @@ export const api = {
       method: 'GET' as const,
       path: '/api/auth/me' as const,
       responses: {
-        200: z.custom<typeof users.$inferSelect>(),
+        200: AuthUserResponseSchema,
         401: errorSchemas.unauthorized,
       },
     },

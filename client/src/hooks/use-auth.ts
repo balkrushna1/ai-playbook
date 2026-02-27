@@ -29,7 +29,8 @@ export function useAuth() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Invalid username or password");
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 401) throw new Error(errData.message || "Invalid username or password");
         throw new Error("Failed to login");
       }
       return api.auth.login.responses[200].parse(await res.json());
@@ -51,7 +52,8 @@ export function useAuth() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        if (res.status === 400) throw new Error("Username may already be taken");
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 400) throw new Error(errData.message || "Username may already be taken");
         throw new Error("Failed to register");
       }
       return api.auth.register.responses[201].parse(await res.json());

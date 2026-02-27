@@ -3,10 +3,19 @@ import type { User, InsertUser, Playbook, InsertPlaybook, Step, InsertStep, Rati
 import { db } from "./db";
 import { eq, desc, sql, and } from "drizzle-orm";
 
+type GoogleUserInput = {
+  username: string;
+  password: string;
+  googleId: string;
+};
+
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByGoogleId(googleId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  createGoogleUser(user: GoogleUserInput): Promise<User>;
+  linkGoogleAccount(userId: string, googleId: string): Promise<User>;
 
   getPlaybooks(params?: { search?: string, category?: string, difficulty?: string, sort?: 'newest' | 'highest_rated' }): Promise<any[]>;
   getPlaybookBySlug(slug: string): Promise<any | undefined>;
@@ -30,9 +39,36 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByGoogleId(googleId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.googleId, googleId));
+    return user;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async createGoogleUser(insertUser: GoogleUserInput): Promise<User> {
+    const [user] = await db.insert(users).values({ ...insertUser, authProvider: "google" }).returning();
+    return user;
+  }
+
+  async linkGoogleAccount(userId: string, googleId: string): Promise<User> {
+    const existing = await this.getUser(userId);
+    if (!existing) {
+      throw new Error("User not found");
+    }
+
+    const nextProvider = existing.authProvider === "local" ? "both" : existing.authProvider;
+
+    const [updated] = await db
+      .update(users)
+      .set({ googleId, authProvider: nextProvider })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updated;
   }
 
   async getPlaybooks(params?: { search?: string, category?: string, difficulty?: string, sort?: 'newest' | 'highest_rated' }) {
