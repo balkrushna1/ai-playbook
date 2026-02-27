@@ -1,0 +1,297 @@
+I want you to build a production-ready MVP web application called "FlowPilot".
+
+FlowPilot is a premium, modern, community-driven AI Workflow Directory platform.
+
+IMPORTANT:
+- This is NOT an automation tool.
+- This is NOT a prompt marketplace.
+- This is NOT a paid platform (all workflows are free).
+- This is an open community where users can create and share structured AI workflows ("Playbooks").
+
+Users should be able to:
+- Sign up / log in
+- Create playbooks
+- View playbooks created by others
+- Rate playbooks (1–5 stars)
+- See average ratings publicly
+
+The app must be clean, minimal, premium, and scalable.
+
+
+====================================
+TECH STACK REQUIREMENTS
+====================================
+
+Use:
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (Database + Authentication)
+
+Do NOT:
+- Add Stripe
+- Add payment logic
+- Overengineer
+- Use heavy UI libraries
+- Add microservices
+
+
+====================================
+UI / DESIGN REQUIREMENTS
+====================================
+
+Design style:
+- Minimal
+- Premium SaaS look
+- Clean whitespace
+- Neutral color palette
+- Subtle hover effects
+- Card-based layout
+- Rounded corners
+- Soft shadows
+- Similar aesthetic to Linear or Vercel
+
+No flashy animations.
+No dark-mode complexity for MVP.
+
+
+====================================
+CORE DATA STRUCTURE
+====================================
+
+Each workflow is called a "Playbook".
+
+Playbook fields:
+
+- id (uuid)
+- user_id (foreign key to users)
+- title (text)
+- slug (unique text)
+- short_description (text)
+- category (text)
+- difficulty (Beginner | Intermediate | Advanced)
+- estimated_time (text)
+- tools_used (array of text)
+- created_at (timestamp)
+
+Each Playbook contains multiple Steps.
+
+Step fields:
+
+- id (uuid)
+- playbook_id (foreign key)
+- step_number (integer)
+- title (text)
+- description (text)
+- tool_used (text)
+- prompt_text (text, optional)
+- expected_output (text)
+
+Rating fields:
+
+Create a separate table for ratings:
+
+Table: ratings
+- id (uuid)
+- playbook_id (foreign key)
+- user_id (foreign key)
+- rating (integer 1–5)
+- created_at (timestamp)
+
+Each user can rate a playbook only once.
+Enforce unique constraint on (playbook_id, user_id).
+
+Store average rating dynamically via query (do not store in table for MVP).
+
+
+====================================
+FEATURES TO IMPLEMENT
+====================================
+
+1) PUBLIC PAGES
+
+Homepage:
+- Hero section
+- Headline: "Discover and Share AI Playbooks"
+- Subheadline
+- CTA button
+- Featured playbooks (sorted by highest rating)
+- Categories section
+- Footer
+
+Playbook Listing Page:
+- Grid layout
+- Search bar
+- Filter by category
+- Filter by difficulty
+- Sort by:
+    - Newest
+    - Highest rated
+- Show:
+    - Title
+    - Short description
+    - Category
+    - Difficulty
+    - Average rating (stars)
+    - Number of ratings
+    - Author name
+
+Playbook Detail Page:
+- Title
+- Author
+- Description
+- Metadata (difficulty, time, tools)
+- Average rating
+- Star rating UI (1–5 clickable stars)
+- Step-by-step expandable sections
+- Copy prompt button
+
+
+2) AUTHENTICATION
+
+- Supabase email/password auth
+- Session management
+- Logged-in users can:
+    - Create playbooks
+    - Rate playbooks
+    - Edit their own playbooks
+    - Delete their own playbooks
+
+Non-logged-in users:
+    - Can browse and read
+    - Cannot create or rate
+
+
+3) CREATE PLAYBOOK PAGE (Protected Route)
+
+Allow logged-in users to:
+
+- Enter basic metadata
+- Add tools_used dynamically
+- Add multiple steps dynamically
+- Reorder steps
+- Submit playbook
+
+Validate inputs properly.
+
+
+4) EDIT / DELETE LOGIC
+
+Users can:
+- Edit only their own playbooks
+- Delete only their own playbooks
+
+Implement proper ownership checks.
+
+
+5) RATING LOGIC
+
+- Logged-in users can rate 1–5 stars
+- If already rated → allow update
+- Display:
+    - Average rating
+    - Total rating count
+- Show rating visually with star icons
+
+
+====================================
+DATABASE (SUPABASE)
+====================================
+
+Tables:
+
+users (managed by Supabase auth)
+
+playbooks
+- id (uuid primary key)
+- user_id (uuid foreign key)
+- title (text)
+- slug (unique text)
+- short_description (text)
+- category (text)
+- difficulty (text)
+- estimated_time (text)
+- tools_used (text array)
+- created_at (timestamp default now())
+
+steps
+- id (uuid primary key)
+- playbook_id (uuid foreign key)
+- step_number (integer)
+- title (text)
+- description (text)
+- tool_used (text)
+- prompt_text (text)
+- expected_output (text)
+
+ratings
+- id (uuid primary key)
+- playbook_id (uuid foreign key)
+- user_id (uuid foreign key)
+- rating (integer 1–5)
+- created_at (timestamp default now())
+
+Add unique constraint:
+(playbook_id, user_id)
+
+
+====================================
+SEARCH & FILTERING
+====================================
+
+Implement:
+- Client-side search by title
+- Filter by category
+- Filter by difficulty
+- Sort by:
+    - Newest
+    - Highest rated
+
+
+====================================
+PROJECT STRUCTURE
+====================================
+
+- Clean folder structure
+- Reusable UI components
+- SEO-friendly routing
+- Proper TypeScript types
+- Modular architecture
+- Separate components for:
+    - PlaybookCard
+    - RatingStars
+    - StepSection
+    - CreatePlaybookForm
+
+
+====================================
+INITIAL SEED DATA
+====================================
+
+Create 5 example playbooks with:
+- Realistic structured steps
+- Proper categories
+- Dummy ratings for testing
+
+
+====================================
+DELIVERABLES
+====================================
+
+Generate:
+
+- Full project file structure
+- All pages
+- Components
+- Supabase integration
+- Rating logic
+- CRUD logic
+- Example seed data
+- README with setup instructions
+
+Build this as a scalable community SaaS foundation.
+
+Keep it simple.
+Keep it clean.
+Keep it premium.
