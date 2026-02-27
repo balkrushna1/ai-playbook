@@ -10,6 +10,7 @@ type SeoPayload = {
   twitterTitle: string;
   twitterDescription: string;
   twitterImage: string;
+  rssUrl: string;
   structuredData: string;
 };
 
@@ -79,7 +80,7 @@ export function getDefaultSeo(siteBaseUrl: string): SeoPayload {
   const description =
     "Discover proven AI workflows and prompt playbooks for writing, coding, design, and marketing.";
   const canonicalUrl = `${siteUrl}/`;
-  const imageUrl = `${siteUrl}/favicon.png`;
+  const imageUrl = `${siteUrl}/og/default.svg`;
 
   return {
     title,
@@ -93,6 +94,7 @@ export function getDefaultSeo(siteBaseUrl: string): SeoPayload {
     twitterTitle: title,
     twitterDescription: description,
     twitterImage: imageUrl,
+    rssUrl: `${siteUrl}/rss.xml`,
     structuredData: buildDefaultStructuredData(siteUrl),
   };
 }
@@ -102,7 +104,7 @@ export function getPlaybookSeo(siteBaseUrl: string, playbook: PlaybookSeoInput):
   const title = `${playbook.title} | PlaybookAI`;
   const description = playbook.shortDescription;
   const canonicalUrl = `${siteUrl}/playbook/${encodeURIComponent(playbook.slug)}`;
-  const imageUrl = `${siteUrl}/favicon.png`;
+  const imageUrl = `${siteUrl}/og/playbook/${encodeURIComponent(playbook.slug)}.svg`;
 
   const howToSchema: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -185,6 +187,7 @@ export function getPlaybookSeo(siteBaseUrl: string, playbook: PlaybookSeoInput):
     twitterTitle: title,
     twitterDescription: description,
     twitterImage: imageUrl,
+    rssUrl: `${siteUrl}/rss.xml`,
     structuredData: JSON.stringify([howToSchema, breadcrumbSchema]),
   };
 }
@@ -202,5 +205,6 @@ export function injectSeoIntoHtml(html: string, payload: SeoPayload): string {
     .replaceAll("__SEO_TWITTER_TITLE__", escapeHtml(payload.twitterTitle))
     .replaceAll("__SEO_TWITTER_DESCRIPTION__", escapeHtml(payload.twitterDescription))
     .replaceAll("__SEO_TWITTER_IMAGE__", escapeHtml(payload.twitterImage))
+    .replaceAll("__SEO_RSS_URL__", escapeHtml(payload.rssUrl))
     .replace("__SEO_STRUCTURED_DATA__", payload.structuredData);
 }
