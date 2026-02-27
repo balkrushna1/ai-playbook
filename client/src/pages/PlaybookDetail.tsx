@@ -18,7 +18,7 @@ export default function PlaybookDetail() {
   const [, setLocation] = useLocation();
   const { data: playbook, isLoading } = usePlaybook(params?.slug || "");
   const { user } = useAuth();
-  const { rate } = useRatePlaybook();
+  const rateMutation = useRatePlaybook();
   const { deletePlaybook, isPending: isDeleting } = useDeletePlaybook();
   const { toast } = useToast();
   
@@ -46,7 +46,7 @@ export default function PlaybookDetail() {
       setAuthModalOpen(true);
       return;
     }
-    await rate({ id: playbook.id, rating, slug: playbook.slug });
+    await rateMutation.mutateAsync({ id: playbook.id, rating, slug: playbook.slug });
   };
 
   const copyToClipboard = (text: string) => {
@@ -122,7 +122,7 @@ export default function PlaybookDetail() {
             <div className="flex-1" />
 
             {isAuthor && (
-              <Button variant="destructive" size="sm" variant="outline" className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20" onClick={() => setDeleteModalOpen(true)}>
+              <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20" onClick={() => setDeleteModalOpen(true)}>
                 <Trash className="w-4 h-4 mr-2" /> Delete Playbook
               </Button>
             )}
