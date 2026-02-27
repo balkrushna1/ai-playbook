@@ -33,7 +33,11 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  const store = new PostgresStore({ pool, createTableIfMissing: true });
+  const store = new PostgresStore({
+    pool,
+    tableName: "session",
+    createTableIfMissing: false,
+  });
   app.set("trust proxy", 1);
   app.use(
     session({
